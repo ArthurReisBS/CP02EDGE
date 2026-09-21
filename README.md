@@ -36,7 +36,7 @@ Um ESP32 simulado no Wokwi monitora a altura da vegetação na beira da rodovia.
 
 ## Arquitetura
 
-```
+```mermaid
 flowchart LR
     A[ESP32 rodando<br/>Firmware 1.0] -->|3 sessões concluídas| B[Conecta ao<br/>Wokwi-GUEST]
     B --> C[GET version.json<br/>no GitHub]
