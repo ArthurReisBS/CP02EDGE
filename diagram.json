@@ -1,0 +1,129 @@
+{
+  "version": 1,
+  "author": "Grupo CP02 Edge Computing",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-v1",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-rgb-led",
+      "id": "led1",
+      "top": -60,
+      "left": 250,
+      "attrs": {
+        "common": "cathode"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 30,
+      "left": 190,
+      "rotate": 90,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r2",
+      "top": 70,
+      "left": 230,
+      "rotate": 90,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r3",
+      "top": 110,
+      "left": 270,
+      "rotate": 90,
+      "attrs": {
+        "value": "220"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "esp:TX0",
+      "$serialMonitor:RX",
+      "",
+      []
+    ],
+    [
+      "esp:RX0",
+      "$serialMonitor:TX",
+      "",
+      []
+    ],
+    [
+      "esp:D25",
+      "r1:1",
+      "red",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "r1:2",
+      "led1:R",
+      "red",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "esp:D26",
+      "r2:1",
+      "green",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "r2:2",
+      "led1:G",
+      "green",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "esp:D27",
+      "r3:1",
+      "blue",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "r3:2",
+      "led1:B",
+      "blue",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "led1:COM",
+      "esp:GND.1",
+      "black",
+      [
+        "v0"
+      ]
+    ]
+  ],
+  "serialMonitor": {
+    "display": "always",
+    "collapse": false,
+    "convertEol": false,
+    "newline": "lf"
+  }
+}

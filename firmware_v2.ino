@@ -85,7 +85,7 @@ void imprimirCabecalho() {
 }
 
 void conectarWiFi() {
-  Serial.print("A ligar a rede Wi-Fi ");
+  Serial.print("Conectando a rede Wi-Fi ");
   Serial.print(ssid);
   WiFi.begin(ssid, password, 6); 
   int tentativas = 0;
@@ -96,9 +96,9 @@ void conectarWiFi() {
   }
   Serial.println();
   if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("Wi-Fi ligado com sucesso!");
+    Serial.println("Wi-Fi conectado com sucesso!");
   } else {
-    Serial.println("Erro: Nao foi possivel ligar ao Wi-Fi.");
+    Serial.println("Erro: Nao foi possivel conectar ao Wi-Fi.");
   }
 }
 
@@ -160,20 +160,20 @@ ResultadoOTA executarOTA(const String &url) {
 }
 
 void aplicarAtualizacao(const String &url) {
-  Serial.println("A descarregar e gravar o novo firmware...");
+  Serial.println("Baixando e gravando o novo firmware...");
   ResultadoOTA resultado = executarOTA(url);
 
   switch (resultado) {
     case OTA_OK:
-      Serial.println("Gravacao concluida. A reiniciar na versao nova...");
+      Serial.println("Gravacao concluida. Reiniciando na versao nova...");
       delay(500);
       ESP.restart();
       break;
     case OTA_SEM_WIFI:
-      Serial.println("Erro: A ligacao Wi-Fi caiu durante a atualizacao.");
+      Serial.println("Erro: A conexao Wi-Fi caiu durante a atualizacao.");
       break;
     case OTA_DOWNLOAD_FALHOU:
-      Serial.println("Erro: Nao foi possivel descarregar o ficheiro .bin.");
+      Serial.println("Erro: Nao foi possivel baixar o arquivo .bin.");
       break;
     case OTA_SEM_ESPACO:
       Serial.println("Erro: Espaco insuficiente na particao OTA.");
@@ -187,10 +187,10 @@ void aplicarAtualizacao(const String &url) {
 
 void consultarManifestoOTA() {
   if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("Erro: Sem ligacao Wi-Fi para procurar o manifesto.");
+    Serial.println("Erro: Sem conexao Wi-Fi para consultar o manifesto.");
     return;
   }
-  Serial.println("A consultar manifesto de versao...");
+  Serial.println("Consultando o manifesto de versao...");
   HTTPClient http;
   http.begin(URL_MANIFESTO);
   int httpCode = http.GET();
@@ -201,7 +201,7 @@ void consultarManifestoOTA() {
     DeserializationError erro = deserializeJson(doc, payload);
 
     if (erro) {
-      Serial.println("Erro: Falha ao interpretar o ficheiro version.json.");
+      Serial.println("Erro: Falha ao interpretar o arquivo version.json.");
       http.end();
       return;
     }
@@ -216,7 +216,7 @@ void consultarManifestoOTA() {
 
     if (String(versaoDisponivel) != String(VERSAO_FIRMWARE)) {
       String urlFirmware = String(urlBinario);
-      Serial.println("Atualizacao encontrada! A preparar descarregamento...");
+      Serial.println("Atualizacao encontrada! Preparando o download...");
       Serial.print("URL do Firmware: ");
       Serial.println(urlFirmware);
       http.end();
@@ -226,7 +226,7 @@ void consultarManifestoOTA() {
       Serial.println("A versao instalada ja e a mais recente.");
     }
   } else {
-    Serial.print("Erro: O manifesto nao pode ser acedido. Codigo HTTP: ");
+    Serial.print("Erro: O manifesto nao pode ser acessado. Codigo HTTP: ");
     Serial.println(httpCode);
   }
   http.end();
