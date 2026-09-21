@@ -2,7 +2,17 @@
 #include <esp_system.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
+#include <WiFiClientSecure.h>
+#include <Update.h>
 #include <ArduinoJson.h>
+
+enum ResultadoOTA {
+  OTA_OK,
+  OTA_SEM_WIFI,
+  OTA_DOWNLOAD_FALHOU,
+  OTA_SEM_ESPACO,
+  OTA_GRAVACAO_FALHOU
+};
 
 const char *VERSAO_FIRMWARE = "1.0";
 
@@ -68,6 +78,89 @@ void conectarWiFi() {
   }
 }
 
+void mostrarProgressoOTA(size_t escritos, size_t total) {
+  static int ultimaFatia = -1;
+  if (total == 0) return;
+  int fatia = (escritos * 100) / total / 10;
+  if (fatia != ultimaFatia) {
+    ultimaFatia = fatia;
+    Serial.print("Gravado: ");
+    Serial.print(fatia * 10);
+    Serial.println("%");
+  }
+}
+
+ResultadoOTA executarOTA(const String &url) {
+  if (WiFi.status() != WL_CONNECTED) return OTA_SEM_WIFI;
+
+  WiFiClientSecure cliente;
+  cliente.setInsecure();
+
+  HTTPClient http;
+  if (!http.begin(cliente, url)) return OTA_DOWNLOAD_FALHOU;
+
+  int codigo = http.GET();
+  if (codigo != HTTP_CODE_OK) {
+    Serial.print("Codigo HTTP do binario: ");
+    Serial.println(codigo);
+    http.end();
+    return OTA_DOWNLOAD_FALHOU;
+  }
+
+  int tamanho = http.getSize();
+  if (tamanho <= 0) {
+    http.end();
+    return OTA_DOWNLOAD_FALHOU;
+  }
+  Serial.print("Tamanho do firmware: ");
+  Serial.print(tamanho);
+  Serial.println(" bytes");
+
+  if (!Update.begin(tamanho)) {
+    http.end();
+    return OTA_SEM_ESPACO;
+  }
+
+  Update.onProgress(mostrarProgressoOTA);
+  size_t gravados = Update.writeStream(http.getStream());
+  http.end();
+
+  if (gravados != (size_t)tamanho) {
+    Update.abort();
+    return OTA_GRAVACAO_FALHOU;
+  }
+  if (!Update.end(true) || !Update.isFinished()) {
+    return OTA_GRAVACAO_FALHOU;
+  }
+  return OTA_OK;
+}
+
+void aplicarAtualizacao(const String &url) {
+  Serial.println("A descarregar e gravar o novo firmware...");
+  ResultadoOTA resultado = executarOTA(url);
+
+  switch (resultado) {
+    case OTA_OK:
+      Serial.println("Gravacao concluida. A reiniciar na versao nova...");
+      delay(500);
+      ESP.restart();
+      break;
+    case OTA_SEM_WIFI:
+      Serial.println("Erro: A ligacao Wi-Fi caiu durante a atualizacao.");
+      break;
+    case OTA_DOWNLOAD_FALHOU:
+      Serial.println("Erro: Nao foi possivel descarregar o ficheiro .bin.");
+      break;
+    case OTA_SEM_ESPACO:
+      Serial.println("Erro: Espaco insuficiente na particao OTA.");
+      break;
+    case OTA_GRAVACAO_FALHOU:
+      Serial.print("Erro: Falha ao gravar o firmware. ");
+      Serial.println(Update.errorString());
+      break;
+  }
+}
+
 void consultarManifestoOTA() {
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("Erro: Sem ligacao Wi-Fi para procurar o manifesto.");
@@ -98,9 +191,13 @@ void consultarManifestoOTA() {
     Serial.println(versaoDisponivel);
 
     if (String(versaoDisponivel) != String(VERSAO_FIRMWARE)) {
+      String urlFirmware = String(urlBinario);
       Serial.println("Atualizacao encontrada! A preparar descarregamento...");
       Serial.print("URL do Firmware: ");
-      Serial.println(urlBinario);
+      Serial.println(urlFirmware);
+      http.end();
+      aplicarAtualizacao(urlFirmware);
+      return;
     } else {
       Serial.println("A versao instalada ja e a mais recente.");
     }
